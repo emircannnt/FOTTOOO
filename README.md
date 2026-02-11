@@ -53,6 +53,28 @@ npx expo start -c
 >
 > proje dosyasında sürümü `0.81.5` yapıp yeniden `npm install` + `npm run fix-deps` çalıştırın.
 
+
+## Expo Go Uyarıları (Normal Davranış)
+
+Terminalde şu uyarıyı görmeniz beklenebilir:
+
+- `Due to changes in Androids permission requirements, Expo Go can no longer provide full access to the media library...`
+
+Bu, Android 13+ izin modeli nedeniyle **Expo Go kısıtı**dır. `expo-media-library` ile tam silme/erişim senaryolarını doğrulamak için **development build** kullanın:
+
+```bash
+npm run build:dev:android
+npm run start:dev
+```
+
+Sonra telefona kurulan development client ile projeyi açın.
+
+Ayrıca şu uyarı:
+
+- `SafeAreaView has been deprecated... use react-native-safe-area-context`
+
+kod tarafında giderildi; uygulama artık `react-native-safe-area-context` içindeki `SafeAreaView` kullanır.
+
 ## Geliştirme Komutları
 
 ```bash

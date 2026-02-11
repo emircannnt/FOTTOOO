@@ -11,13 +11,17 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/videoLogic.test.js",
     "doctor": "npx expo-doctor",
-    "fix-deps": "npx expo install --fix"
+    "fix-deps": "npx expo install --fix",
+    "start:dev": "expo start --dev-client",
+    "build:dev:android": "eas build -p android --profile development",
+    "build:dev:ios": "eas build -p ios --profile development"
   },
   "dependencies": {
     "expo": "~54.0.13",
     "expo-media-library": "~18.2.0",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

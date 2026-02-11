@@ -3,12 +3,12 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   deleteVideos,
   loadVideosSortedBySize,
@@ -92,7 +92,8 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
       {stage === 'splash' && (
         <View style={styles.centerBox}>
           <Text style={styles.title}>Akıllı Arşiv: Dijital Düzenleyiciniz</Text>
@@ -208,7 +209,8 @@ export default function App() {
           )}
         </View>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
