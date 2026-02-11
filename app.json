@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Galeri Düzenleyici E.T",
+    "slug": "galeri-duzenleyici-et",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Galerinizdeki karmaşayı çözmemiz için okuma izni vermelisiniz.",
+          "savePhotosPermission": "Silme işlemleri için medya erişim izni gereklidir."
+        }
+      ]
+    ]
+  }
+}
