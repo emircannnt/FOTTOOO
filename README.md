@@ -7,9 +7,11 @@ Bu proje, kullanıcının galerisini yapay zeka destekli şekilde düzenlemek i�
 - Splash ekranı: **Akıllı Arşiv: Dijital Düzenleyiciniz**
 - İzin modalı: Galeri okuma izni akışı (Allow / Deny)
 - Tarama aşaması:
-  - Videoları boyuta göre sıralama
-  - Fotoğrafları AI prompt ile analiz etme hazırlığı
+  - Fotoğrafları tarar ve sınıflandırır
+  - Ekran görüntülerini ve kamera fotoğraflarını ayırır
+  - Videoları dosya boyutuna göre büyükten küçüğe sıralar
 - Sonuç sekmeleri:
+  - **Galeri**: Ekran Görüntüleri / Diğer Fotoğraflar / Videolar (3 ana bölüm)
   - **Önemli**
   - **Temizlik**
   - **Videolar** (büyükten küçüğe)

@@ -20,3 +20,12 @@ export interface ClassificationResult {
   etiket: ClassificationTag;
   gerekce: string;
 }
+
+export interface PhotoAssetItem {
+  id: string;
+  uri: string;
+  filename: string;
+  mediaSubtypes?: string[];
+  fileSize: number;
+  classification: ClassificationResult;
+}
