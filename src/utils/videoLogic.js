@@ -5,8 +5,8 @@ function sortVideosBySize(videos) {
 function createSizeBuckets(videos) {
   return {
     top: videos.filter((v) => (v.fileSize || 0) > 1024 * 1024 * 1024),
-    mid: videos.filter((v) => (v.fileSize || 0) >= 100 * 1024 * 1024 && (v.fileSize || 0) <= 500 * 1024 * 1024),
-    low: videos.filter((v) => (v.fileSize || 0) < 10 * 1024 * 1024)
+    mid: videos.filter((v) => (v.fileSize || 0) >= 100 * 1024 * 1024 && (v.fileSize || 0) <= 1024 * 1024 * 1024),
+    low: videos.filter((v) => (v.fileSize || 0) < 100 * 1024 * 1024)
   };
 }
 

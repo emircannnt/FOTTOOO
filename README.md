@@ -1,19 +1,20 @@
 # Galeri Düzenleyici E.T
 
-Bu proje, kullanıcının galerisini yapay zeka destekli şekilde düzenlemek için hazırlanmış bir Expo React Native uygulama taslağıdır.
+Bu proje, kullanıcının galerisini yapay zeka destekli şekilde düzenlemek için geliştirilen bir Expo React Native uygulamasıdır.
 
 ## Özellikler
 
 - Splash ekranı: **Akıllı Arşiv: Dijital Düzenleyiciniz**
+- Açılış gizlilik bildirimi: **Fotoğraf ve videolar cihaz dışına aktarılmaz**
 - İzin modalı: Galeri okuma izni akışı (Allow / Deny)
 - Tarama aşaması:
-  - Videoları boyuta göre sıralama
-  - Fotoğrafları AI prompt ile analiz etme hazırlığı
+  - Videoları boyuta göre sıralama (sayfalı tarama ile tüm galeri)
+  - Fotoğrafları tarayıp ekran görüntüsü/fotoğraf + önemli/önemsiz olarak sınıflandırma
 - Sonuç sekmeleri:
-  - **Önemli**
-  - **Temizlik**
+  - **Ekran Görüntüleri** (Önemli / Önemsiz alt filtre)
+  - **Fotoğraflar** (Önemli / Önemsiz alt filtre)
   - **Videolar** (büyükten küçüğe)
-- Video sekmesinde:
+- Görsel ve video sekmelerinde:
   - **Tümünü Seç**
   - Tek tek dokunarak seçim
   - **Sil** (galeriden kalıcı silme)
@@ -47,6 +48,41 @@ npx expo start -c
 
 Projeyi yükseltmek istemiyorsanız, projedeki SDK sürümüyle uyumlu Expo Go APK kurmanız gerekir.
 
+
+## AI Model Entegrasyonu (Production)
+
+Gerçek OCR/vision sınıflandırması için uzak model endpointi bağlayabilirsiniz:
+
+- `EXPO_PUBLIC_AI_API_URL`: Sınıflandırma endpoint URL
+- `EXPO_PUBLIC_AI_API_KEY`: (opsiyonel) Bearer token
+
+Eğer URL verilmezse uygulama güvenli fallback olarak yerel sınıflandırma sezgilerine döner.
+
+Beklenen endpoint gövdesi:
+
+```json
+{
+  "prompt": "MASTER_VISION_PROMPT",
+  "image": {
+    "uri": "file://...",
+    "filename": "IMG_1234.jpg",
+    "width": 1080,
+    "height": 1920
+  }
+}
+```
+
+Beklenen yanıt:
+
+```json
+{
+  "ana_kategori": "EKRAN_GORUNTUSU" | "DIGER_GORUNTU",
+  "onem_durumu": "ONEMLI" | "ONEMSIZ",
+  "etiket": "Hukuk" | "Dekont" | "Bulanık" | "Anı" | "Sosyal Medya" | "Belge" | "Ürün" | "Seyahat" | "Kimlik" | "Çöp",
+  "gerekce": "Kısa açıklama"
+}
+```
+
 ## Build Alma
 
 ### Android APK/AAB
@@ -67,7 +103,7 @@ eas build -p ios --profile production
 
 ## Mimari
 
-- `App.tsx`: Ana akış, izin, tarama, sekmeler ve video seç/sil UI
+- `App.tsx`: Ana akış, izin, tarama, sekmeler, gerçek galeri sınıflandırma ve kalıcı silme UI
 - `src/services/mediaService.ts`: `expo-media-library` entegrasyonu
 - `src/services/aiPrompt.ts`: Arka plan modeline gönderilecek sistem promptu + örnek sınıflandırma sözleşmesi
 - `AI_CLASSIFICATION_PROMPT_TR.md`: Promptun detaylı ürün dokümantasyonu

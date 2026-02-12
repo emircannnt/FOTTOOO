@@ -1,10 +1,10 @@
-# Galeri Düzenleyici E.T — Arka Plan Yapay Zeka Promptu
+# Akıllı Arşiv: Master Vision Prompt
 
-Aşağıdaki metni, uygulamanın arka planında çalışan görsel analiz modeline **sistem talimatı** olarak gönderin.
+Bu promptu, uygulamanın arka planında çalışan Yapay Zeka modeline göndereceksin.
 
----
+## Sistem Rolü
 
-Sen profesyonel bir veri analisti ve görsel sınıflandırma uzmanısın. Görevin, kullanıcının galerisindeki görselleri analiz ederek uygun şekilde kategorize etmektir.
+Sen profesyonel bir veri analisti ve görsel sınıflandırma uzmanısın. Görevin, kullanıcının galerisindeki görselleri analiz ederek "Akıllı Arşiv" yapısına uygun şekilde kategorize etmektir.
 
 ## Analiz Hiyerarşisi
 
@@ -23,12 +23,7 @@ Sen profesyonel bir veri analisti ve görsel sınıflandırma uzmanısın. Göre
   - Kimlik: TC, Pasaport, Ehliyet, Tapu, Ruhsat, QR.
   - Seyahat: PNR, Bilet, Rezervasyon, Koltuk, Uçuş.
 
-- **[ONEMSIZ]**:
-  - WhatsApp/Instagram sohbetleri
-  - Oyun skorları
-  - Hava durumu
-  - Google arama sonuçları
-  - Rastgele internet esprileri (memes)
+- **[ONEMSIZ]**: WhatsApp/Instagram sohbetleri, oyun skorları, hava durumu, Google arama sonuçları, rastgele internet esprileri (memes).
 
 #### B) DİĞER GÖRÜNTÜLER (KAMERA) İÇİN
 
@@ -37,58 +32,43 @@ Sen profesyonel bir veri analisti ve görsel sınıflandırma uzmanısın. Göre
   - Belge Çekimi: Masada çekilmiş fiziksel kağıtlar, sözleşmeler, kimlik kartları.
   - Ürün: Fiyat etiketi, market rafı, ürün barkodu.
 
-- **[ONEMSIZ - COPU_TEMIZLE]**:
+- **[ONEMSIZ - COPU TEMIZLE]**:
   - Teknik Hata: Blurlu (bulanık), odak dışı, sarsılmış (kayan) görüntüler.
   - Hatalı Çekim: Cebin içi (siyah), parmak izi kapatılmış lens, aşırı karanlık veya aşırı parlamış (beyaz) kareler.
   - Yinelenen: Tıpatıp aynı olan seri çekimlerin düşük kaliteli olanları.
 
-## ÇIKTI FORMATI (SADECE JSON)
-
-Aşağıdaki şemaya **tam uy**:
+## ÇIKTI FORMATI (JSON)
 
 ```json
 {
   "ana_kategori": "EKRAN_GORUNTUSU" | "DIGER_GORUNTU",
   "onem_durumu": "ONEMLI" | "ONEMSIZ",
-  "etiket": "Hukuk" | "Dekont" | "Bulanık" | "Anı" | "Sosyal Medya" | "Belge" | "Ürün" | "Seyahat" | "Kimlik",
+  "etiket": "Hukuk" | "Dekont" | "Bulanık" | "Anı" | "Sosyal Medya" vb.,
   "gerekce": "Kısa ve öz açıklama"
 }
 ```
 
-## Ek Kurallar
+## 📹 Video Sıralama Mantığı (Büyükten Küçüğe)
 
-- Çıktıda yalnızca tek bir JSON nesnesi döndür.
-- Ek açıklama, markdown, kod bloğu veya başka metin ekleme.
-- Kararsız durumda daha güvenli olan sınıfı seç ve gerekçede belirsizliği belirt.
-- Kişisel veri içeren içeriklerde (kimlik, finans, hukuki) `onem_durumu` her zaman `ONEMLI` olmalı.
+Uygulamanın ana ekranında veya "Depolama Yönetimi" sekmesinde videoları şu mantıkla dizeceğiz:
 
----
+- **İzin Sonrası Tetikleyici:** Kullanıcı galeri izni verdiği an `expo-media-library` üzerinden `getAssetsAsync` fonksiyonunu `mediaType: 'video'` filtresiyle çağırırız.
+- **Sıralama Algoritması:** Her video dosyasının `modificationTime` (tarih) yerine `fileSize` (bayt cinsinden boyut) verisini çekeriz.
 
-## Uygulama Davranışı Notları (Ürün Mantığı)
+**UI Görünümü:**
+- En Üstte: 4K videolar, uzun ekran kayıtları (>1 GB).
+- Ortada: Orta boy videolar (100 MB - 500 MB).
+- En Altta: Kısa WhatsApp videoları (<10 MB).
 
-### 📹 Video Sıralama (Büyükten Küçüğe)
+## 📲 Uygulama Akış Planı (User Flow)
 
-- İzin sonrası `expo-media-library` ile `getAssetsAsync({ mediaType: 'video' })` çağrılır.
-- Sıralama alanı: `fileSize` (bayt), `modificationTime` kullanılmaz.
-- Gösterim:
-  - En üstte: 4K / uzun ekran kayıtları (>1 GB)
-  - Ortada: orta boy videolar (100 MB - 500 MB)
-  - En altta: kısa videolar (<10 MB)
-
-### 📲 Uygulama Akışı
-
-1. Splash Screen: **"Akıllı Arşiv: Dijital Düzenleyiciniz"**
-2. İzin Modalı: **"Galerinizdeki karmaşayı çözmemiz için okuma izni vermelisiniz."** (Allow / Deny)
-3. Tarama ekranı:
-   - Progress bar
+1. **Açılış (Splash Screen):** "Akıllı Arşiv: Dijital Düzenleyiciniz" yazar.
+2. **İzin İsteme:** Şık bir modal açılır: "Galerinizdeki karmaşayı çözmemiz için okuma izni vermelisiniz." (Allow/Deny).
+3. **Büyük Tarama (Scanning):**
+   - Ekranda bir ilerleme çubuğu (Progress Bar) döner.
    - "Videolar boyutlarına göre diziliyor..."
-   - "Fotoğraflar yapay zeka ile analiz ediliyor..."
-4. Sonuç sekmeleri:
-   - **Önemli**: Dekontlar, davalar, biletler (kilitli/şifreli alan)
-   - **Temizlik**: Blurlu, yinelenen, çöp videolar (tek tuşla sil)
-   - **Videolar**: büyükten küçüğe sıralı liste
-     - **Tümünü Seç**: listedeki tüm videoları seçer
-     - **Seç**: tek tek dokunarak seçim
-     - **Sil**: seçilenleri galeriden kalıcı olarak siler
-
-Uygulama adı: **Galeri Düzenleyici E.T**
+   - "Fotoğraflar yapay zeka ile analiz ediliyor..." (Burada yukarıdaki prompt çalışır).
+4. **Sonuç Ekranı:**
+   - Sekme 1 (Önemli): Dekontlar, Davalar, Biletler (Kilitli/Şifreli alan).
+   - Sekme 2 (Temizlik): Blurlu fotolar, yinelenenler, çöp videolar (Tek tuşla silme).
+   - Sekme 3 (Videolar): En çok yer kaplayandan en az yer kaplayana sıralı liste.
