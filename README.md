@@ -1,73 +1,163 @@
-# Galeri Düzenleyici E.T
+# Binance Spot Breakout ATR Bot (Testnet-first)
 
-Bu proje, kullanıcının galerisini yapay zeka destekli şekilde düzenlemek için hazırlanmış bir Expo React Native uygulama taslağıdır.
+Production-oriented, minimal Python trading bot for **Binance Spot** with a clean architecture. It runs on **Spot Testnet** first and switches to **Mainnet** with one config flag.
 
-## Özellikler
+> Strategy implemented exactly as requested: EMA trend filter + ATR breakout entries + ATR stop + partial TP + trailing stop + time stop + risk caps.
 
-- Splash ekranı: **Akıllı Arşiv: Dijital Düzenleyiciniz**
-- İzin modalı: Galeri okuma izni akışı (Allow / Deny)
-- Tarama aşaması:
-  - Videoları boyuta göre sıralama
-  - Fotoğrafları AI prompt ile analiz etme hazırlığı
-- Sonuç sekmeleri:
-  - **Önemli**
-  - **Temizlik**
-  - **Videolar** (büyükten küçüğe)
-- Video sekmesinde:
-  - **Tümünü Seç**
-  - Tek tek dokunarak seçim
-  - **Sil** (galeriden kalıcı silme)
+## Architecture (brief)
 
-## Kurulum
+- **Data plane:** WebSocket kline stream drives decisions (`bot/exchange/ws_stream.py`).
+- **Execution plane:** REST client for account, exchange info, and orders (`bot/exchange/binance_client.py`).
+- **Strategy plane:** indicator and signal generation (`bot/strategy/*`).
+- **Risk & portfolio plane:** position sizing, open risk caps, and position lifecycle (`bot/execution/*`).
+- **Ops plane:** centralized settings (`bot/config.py`) + structured logging (`bot/utils/logger.py`).
 
-```bash
-npm install
-npm run start
+## Project Structure
+
+```text
+/bot
+  config.py
+  /exchange
+    binance_client.py
+    ws_stream.py
+    filters.py
+  /strategy
+    indicators.py
+    breakout_atr.py
+  /execution
+    order_manager.py
+    position_manager.py
+    risk.py
+  /utils
+    logger.py
+    time.py
+/tests
+main.py
+README.md
+requirements.txt
+.env.example
 ```
 
-## Expo Go Hata Çözümü (SDK uyumsuzluğu)
+## Strategy Rules (implemented)
 
-Eğer telefonda şu hatayı görüyorsanız:
+- Timeframe: `1h` or `4h` (`TIMEFRAME`)
+- Symbols: configurable (`SYMBOLS`, default `BTCUSDT,ETHUSDT`)
+- Trend filter:
+  - LONG only if `close > EMA50` and `EMA20 > EMA50`
+- Entry:
+  - breakout above highest high of last `BREAKOUT_N` candles + `0.1 * ATR(14)`
+  - execution type configurable: `ENTRY_ORDER_TYPE=market|stop_limit`
+- Initial stop:
+  - `entry - ATR_MULT * ATR(14)` (default `2*ATR`)
+- Position sizing:
+  - `risk_amount = equity * RISK_PCT`
+  - `qty = risk_amount / (entry-stop)` then rounded to `LOT_SIZE`/`STEP_SIZE`; `MIN_NOTIONAL` enforced
+- TP / trailing:
+  - partial at `+TAKE_PROFIT_R` (default +3R), sell `PARTIAL_PCT` (default 40%)
+  - remainder trails via `TRAIL_MODE=lowest_low|atr` (default `lowest_low` over 20 candles)
+- Time stop:
+  - if after `TIME_STOP_CANDLES` (default 10) trade has not reached +1R, exit
 
-> Project is incompatible with this version of Expo Go
+## Portfolio Rules
 
-Sebep: Telefonda Expo Go **SDK 54**, proje ise daha eski SDK ile açılmaya çalışıyor.
+- Max concurrent positions (`MAX_POSITIONS`, default 5)
+- Optional major cap example (`MAX_MAJOR_POSITIONS`, default 2 for BTC/ETH majors)
+- Global open risk cap (`GLOBAL_OPEN_RISK_CAP`, default 3% equity)
 
-### Çözüm 1 (Önerilen): Projeyi SDK 54'e yükselt
+## Setup
 
-Bu repo artık SDK 54 paketlerine ayarlanmıştır. Aşağıdaki komutları çalıştırın:
+1. **Python 3.11+**
+2. Install deps:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+3. Copy environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+## Create Spot Testnet API Key
+
+1. Go to Binance Spot Testnet portal.
+2. Create API key/secret.
+3. Put values into `.env`:
+   - `API_KEY=...`
+   - `API_SECRET=...`
+4. Keep trading permissions only. **Never enable withdrawals**.
+
+## Run Modes
+
+### 1) Dry-run on Testnet (recommended first)
 
 ```bash
-rm -rf node_modules package-lock.json
-npm install
-npx expo start -c
+TESTNET=true DRY_RUN=true python main.py
 ```
 
-### Çözüm 2: Eski Expo Go yükle (önerilmez)
+Expected:
+- Connects to WS
+- Logs signals and simulated order actions
+- No real order sent
 
-Projeyi yükseltmek istemiyorsanız, projedeki SDK sürümüyle uyumlu Expo Go APK kurmanız gerekir.
-
-## Build Alma
-
-### Android APK/AAB
+### 2) Live on Testnet
 
 ```bash
-npm install -g eas-cli
-eas login
-eas build:configure
-eas build -p android --profile preview
-eas build -p android --profile production
+TESTNET=true DRY_RUN=false python main.py
 ```
 
-### iOS
+Expected:
+- Places real testnet spot orders (no real funds)
+- Handles fills/partial fills via order query path
+
+### 3) Switch to Mainnet (single flag)
 
 ```bash
-eas build -p ios --profile production
+TESTNET=false DRY_RUN=true python main.py   # sanity first
+TESTNET=false DRY_RUN=false ALLOW_LIVE_MAINNET=true python main.py  # live mainnet (explicit unlock)
 ```
 
-## Mimari
+⚠️ Mainnet warning: real funds at risk. Start with very small size and strict IP/API restrictions.
 
-- `App.tsx`: Ana akış, izin, tarama, sekmeler ve video seç/sil UI
-- `src/services/mediaService.ts`: `expo-media-library` entegrasyonu
-- `src/services/aiPrompt.ts`: Arka plan modeline gönderilecek sistem promptu + örnek sınıflandırma sözleşmesi
-- `AI_CLASSIFICATION_PROMPT_TR.md`: Promptun detaylı ürün dokümantasyonu
+## Safety Checklist
+
+- [ ] `DRY_RUN=true` validated before any live run
+- [ ] `TESTNET=true` first; strategy behavior observed for multiple sessions
+- [ ] API key has **trading only**, no withdrawals
+- [ ] API key restricted by **IP whitelist**
+- [ ] Use separate keys for testnet and mainnet
+- [ ] Confirm `RISK_PCT`, `GLOBAL_OPEN_RISK_CAP`, `MAX_POSITIONS` are conservative
+- [ ] Verify symbols and min notional/lot filters against exchange info
+- [ ] Monitor `bot.log` for reconnects, rejects, and exits
+
+## Logging
+
+Structured JSON logs to console + file (`bot.log`) with fields including:
+- `order_id`, `symbol`, `side`, `qty`, `price`, `reason`
+
+## Error Handling & Reliability
+
+- REST retries with exponential backoff
+- WS reconnect loop + heartbeat (ping interval/timeouts)
+- Graceful shutdown on `CTRL+C` / SIGTERM
+
+## Tests
+
+Run unit tests:
+```bash
+pytest -q tests/test_indicators.py tests/test_risk_filters.py tests/test_strategy.py tests/test_stop_calc.py
+```
+
+Optional integration smoke test (no orders):
+```bash
+RUN_INTEGRATION=true pytest -q tests/test_smoke_testnet.py
+```
+
+> Smoke test calls `ping` and `exchangeInfo` on testnet while `DRY_RUN=true`.
+
+## Notes
+
+- Official Binance Spot endpoints only:
+  - REST: `/api/v3/*`
+  - WS: Spot stream endpoints
+- No secrets in code. `.env`/environment variables are loaded through the centralized settings object.
